@@ -5,12 +5,13 @@
   "scripts": {
     "dev": "next dev",
     "typecheck": "tsc --noEmit",
-    "lint": "next lint src",
+    "lint": "next lint",
     "build": "next build",
     "start": "next start",
     "deploy": "vercel --prod"
   },
   "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
     "@supabase/auth-helpers-nextjs": "^0.15.0",
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.100.1",

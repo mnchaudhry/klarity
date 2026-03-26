@@ -1,49 +1,50 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from './providers';
-import { Navbar } from '@/components/layout/Navbar';
-import { Sidebar } from '@/components/layout/Sidebar';
-import { Footer } from '@/components/layout/Footer';
+import { AppLayout } from '@/components/layout/AppLayout';
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  display: 'swap',
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const jetbrains = JetBrains_Mono({
+  variable: "--font-mono",
   subsets: ["latin"],
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
-  title: "Klarity | Shatter the Cycle",
-  description: "A premium, privacy-first companion for overcoming addiction and reclaiming your potential.",
+  title: "KLARITY | OPERATION LIBERATION",
+  description: "A private tactical companion for psychological breakthrough and behavioral reclamation.",
+  icons: {
+    icon: "/favicon.ico",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#05080A",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark scroll-smooth selection:bg-accent-emerald selection:text-space-950">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-space-black text-white selection:bg-neon-emerald/30 selection:text-neon-emerald`}
+        className={`${inter.variable} ${jetbrains.variable} antialiased font-sans bg-space-950 text-white min-h-screen selection:bg-accent-emerald selection:text-space-950`}
       >
         <Providers>
-          <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(16,185,129,0.05),transparent_100%)] pointer-events-none" />
-          <Sidebar />
-          <div className="min-h-screen lg:pl-24">
-            <main>
-              {children}
-            </main>
-            <Footer />
-          </div>
-          {/* Mobile Navigation */}
-          <div className="lg:hidden">
-            <Navbar />
-          </div>
+          <AppLayout>
+            {children}
+          </AppLayout>
         </Providers>
       </body>
     </html>
