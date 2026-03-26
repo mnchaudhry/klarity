@@ -1,0 +1,436 @@
+---
+
+## Tech Stack
+
+- **Next.js ** (latest)
+- **Supabase** (auth + database)
+- **Tailwind CSS** (styling)
+- **shadcn/ui** (components)
+- **Anthropic Claude API** (AI chat — claude-sonnet-4-20250514)
+- **Framer Motion** (animations — critical for the spike moment feel)
+- **Recharts** (trigger pattern charts)
+- **Vercel** (deployment)
+
+---
+
+## Database Schema (Supabase)
+
+**users** table
+- id, email, created_at
+- streak_start_date (timestamp)
+- why_im_doing_this (text)
+- current_streak_days (int)
+- longest_streak_days (int)
+
+**struggle_sessions** table
+- id, user_id, created_at
+- trigger_type (enum: bored | stressed | lonely | spontaneous)
+- outcome (enum: overcame | relapsed)
+- duration_seconds (int)
+- ai_messages (jsonb — full conversation stored)
+
+**checkins** table
+- id, user_id, date
+- mood (int 1–5)
+- note (text, optional)
+
+**journal_entries** table
+- id, user_id, created_at
+- content (text)
+
+---
+
+## App Structure & Routes
+
+```
+/                   → landing/marketing page
+/auth               → login + signup
+/onboarding         → first time setup
+/dashboard          → home screen
+/struggling         → the spike intervention flow
+/history            → streak calendar + past sessions
+/patterns           → trigger analysis charts
+/journal            → journal entries
+/settings           → preferences + reset streak
+/api/chat           → Claude API route
+```
+
+---
+
+## Page by Page — Full Detail
+
+---
+
+### `/` Landing Page
+
+**Purpose:** Convert visitor to signup. Minimal, serious, not clinical.
+
+**UI:**
+- Dark background (near black — #0a0a0a)
+- Single headline: *"Break free. One day at a time."*
+- Subline: *"A private, judgment-free app to help you overcome 18+ content addiction."*
+- One CTA button: *"Start Today — It's Free"* → goes to /auth
+- Below fold: 3 feature tiles (Streak Tracking / AI Support / Pattern Insights) — minimal icons, one line each
+- No images. No stock photos. Clean and private-feeling.
+- Footer: Privacy Policy, Terms (important for this category)
+
+---
+
+### `/auth` Auth Page
+
+**Purpose:** Signup / Login
+
+**UI:**
+- Email + password only (no Google/social login — privacy matters here)
+- Toggle between Sign Up / Log In
+- On signup: just email + password, nothing else
+- After signup → redirect to /onboarding
+- After login → redirect to /dashboard
+- Small note at bottom: *"Your data is private and encrypted. We never share it."*
+
+---
+
+### `/onboarding` Onboarding (3 steps, one screen each)
+
+**Step 1 — Why Are You Here**
+- Headline: *"What's driving you to change?"*
+- Large textarea: *"Write it for yourself. You'll see this in your hardest moments."*
+- Placeholder: *"I want to do this because..."*
+- This text is sacred — shown back to them during struggles
+- Next button
+
+**Step 2 — Set Your Start Date**
+- Headline: *"When did your current streak begin?"*
+- Two options:
+  - *"Starting fresh — today"* (most common)
+  - *"I've already been clean since..."* → date picker
+- Clean, large toggle UI
+
+**Step 3 — The One Button Promise**
+- Headline: *"When things get hard, hit one button."*
+- Show a preview/animation of the "I'm Struggling" button
+- Subline: *"We'll be here. No judgment. Just help."*
+- CTA: *"I'm Ready"* → goes to /dashboard
+
+---
+
+### `/dashboard` Home Screen
+
+**Layout:** Full screen, single scroll, dark theme
+
+**Top Section — Streak Display**
+- Large centered number: *"47"* with *"days clean"* below it
+- Below that, smaller: *"1,128 hours · 67,680 minutes"* (granular — makes it feel more real to lose)
+- Subtle animated ring or arc around the number (Framer Motion)
+- Color shifts as streak grows: gray (0-6 days) → blue (7-29 days) → gold (30+ days)
+
+**Middle Section — The Button**
+- Large, full-width button, slightly rounded
+- Text: *"I'm Struggling Right Now"*
+- Color: deep red/amber — stands out from everything else
+- Subtle pulse animation so it never feels invisible
+- Tapping it goes to /struggling
+
+**Below Button — Today's Check-in**
+- If not done today: *"How are you feeling today?"* + 5 mood emoji buttons (😔 😕 😐 🙂 😊)
+- One tap, done. No extra screens.
+- If done: shows their mood with a small checkmark
+
+**Bottom Section — Quick Stats**
+- 3 small cards in a row:
+  - Longest streak (days)
+  - Struggles overcome (total count)
+  - Most common trigger
+- Tapping any card goes to /history or /patterns
+
+**Bottom Nav Bar**
+- 4 icons: Home / History / Patterns / Settings
+- Fixed at bottom
+
+---
+
+### `/struggling` — The Spike Intervention Flow
+
+**This is the most critical UX in the entire app. Every millisecond matters.**
+
+The flow is a series of full-screen "steps" — no scrolling, one thing at a time, transitions handled by Framer Motion.
+
+---
+
+**Step 0 — Pattern Interrupt Screen** *(appears instantly, 0 delay)*
+
+Full screen takeover. Background shifts to deep navy or dark teal — different from the rest of the app on purpose.
+
+Center of screen:
+- Their streak in large text: *"47 days."*
+- Below it: *"That's real. That's yours."*
+- Below that, smaller: *[their "why" text from onboarding — shown in quotes]*
+- Wait 2–3 seconds (auto-advance or tap to continue)
+
+This forced pause is intentional. It's the most important moment.
+
+---
+
+**Step 1 — Trigger Check** *(5 seconds to complete)*
+
+Headline: *"What's going on right now?"*
+
+4 large tap buttons, full width, stacked:
+- 😴 *Bored / nothing to do*
+- 😰 *Stressed / overwhelmed*
+- 😔 *Lonely / disconnected*
+- ⚡ *It just hit me out of nowhere*
+
+One tap → immediately moves to Step 2. No confirm button.
+
+---
+
+**Step 2 — AI Chat** *(core of the flow)*
+
+**UI:**
+- Chat interface, bottom-up (messages appear from bottom)
+- AI message appears first — pre-written based on their trigger selection, arrives instantly (no loading wait for first message)
+- Examples:
+  - Bored → *"Okay. Boredom is one of the sneakiest triggers — the brain looks for stimulation. You're not weak, you're just understimulated right now. Tell me what's around you."*
+  - Stressed → *"You're carrying something heavy right now. That makes sense. Before anything else — what's actually stressing you out? Say it out loud, even just to me."*
+  - Lonely → *"Loneliness hits hard. It's one of the most human feelings there is. I'm here right now. What's making you feel disconnected today?"*
+  - Spontaneous → *"It came out of nowhere — that happens. Your brain is looking for a shortcut to feel good. Let's slow this down together. What were you doing just before?"*
+
+- User types reply → real Claude API call from /api/chat
+- System prompt for Claude (hardcoded, not visible to user):
+  - Role: compassionate recovery coach
+  - Goal: keep user engaged and talking for 10–15 minutes
+  - Never shame, never lecture
+  - Suggest physical redirects naturally within conversation
+  - After 3-4 exchanges, gently ask how they're feeling now vs when they opened the app
+  - If they say they're feeling better, celebrate and guide to resolution
+
+**Chat input:** Simple text box, fixed at bottom, send button. Auto-focus on load.
+
+**Top of chat screen:**
+- Small subtle bar showing their streak: *"47 days at stake"*
+- X button top right — if they tap it, confirm dialog: *"Are you sure you want to leave? Your streak is still intact."*
+
+---
+
+**Step 3 — Physical Redirect Card** *(offered by AI naturally in conversation, or shown as suggestion card after 2 minutes)*
+
+A card slides up from bottom mid-conversation:
+- Headline: *"Want to break the physical state?"*
+- 3 quick options:
+  - 💧 *Splash cold water on your face*
+  - 🏃 *Do 20 pushups or jumping jacks*
+  - 🚶 *Walk to a different room right now*
+- Tapping one acknowledges it, card dismisses, chat continues
+
+---
+
+**Step 4 — Resolution Screen**
+
+After conversation, AI naturally leads to: *"How are you feeling compared to when you opened the app?"*
+
+Then AI presents or user can manually tap a floating button:
+
+Two options, full width:
+- ✅ *"I got through it"* — green
+- 💔 *"I relapsed"* — muted, not punishing red
+
+**If "Got through it":**
+- Full screen celebration — confetti (Framer Motion), large text: *"You did it."*
+- Subline: *"Streak intact. That craving is gone forever."*
+- Small text: *"Struggles overcome: 12"* (increments)
+- Button: *"Back to home"*
+
+**If "Relapsed":**
+- No harsh colors. Muted screen.
+- Text: *"It's okay. One moment doesn't define you."*
+- Below: *"Your streak resets. But everything you learned doesn't."*
+- AI sends one final message: warm, no shame, forward-looking
+- Button: *"Start again"* → resets streak_start_date in Supabase, goes to dashboard
+
+---
+
+### `/history` History Screen
+
+**Top:** Streak calendar — GitHub contribution graph style. Each day is a small square. Green = clean, gray = no data, red = relapse day.
+
+**Below:** List of past struggle sessions
+- Each card shows: date, trigger type, outcome (overcame ✅ or relapsed), duration
+- Tapping a card expands to show the full AI conversation from that session
+
+**Stats bar at top:**
+- Current streak / Longest streak / Total overcame / Total relapsed
+
+---
+
+### `/patterns` Patterns Screen
+
+**Purpose:** Help user understand themselves over time
+
+**Charts (Recharts):**
+1. **Trigger Breakdown** — donut chart. Which triggers come up most (Bored / Stressed / Lonely / Spontaneous)
+2. **Time of Day** — bar chart. When do struggles tend to happen (morning / afternoon / evening / night)
+3. **Day of Week** — bar chart. Which days are hardest
+4. **Mood vs Relapse** — simple correlation. Low mood days = higher struggle frequency
+
+**Below charts:** 2-3 AI-generated insights
+- These are generated by Claude on page load, fed the user's data
+- Example: *"Most of your struggles happen on Sunday evenings. That's worth knowing."*
+- Example: *"Stress is your most common trigger — 60% of your sessions."*
+
+---
+
+### `/journal` Journal Screen
+
+**Simple, private, no frills**
+
+- List of past entries, newest first
+- Each entry shows: date + first line preview
+- FAB (floating action button) bottom right: *"+ New Entry"*
+- Entry editor: full screen, plain textarea, auto-save, no formatting tools
+- Optional: AI button at bottom of editor — *"Reflect with AI"* → opens small chat that helps them process what they wrote
+
+---
+
+### `/settings` Settings Screen
+
+**Sections:**
+
+*Account*
+- Email (display only)
+- Change password
+- Delete account (with confirmation)
+
+*Streak*
+- View streak start date
+- **Reset Streak** button — requires typing "RESET" to confirm (intentional friction)
+
+*Notifications*
+- Daily check-in reminder (time picker)
+- Morning motivation toggle
+- Evening reflection reminder toggle
+
+*Privacy*
+- *"All your data is stored securely and never shared."*
+- Export my data (JSON download)
+- Delete all data
+
+*About*
+- Version, privacy policy, terms
+
+---
+
+## API Route — `/api/chat`
+
+- Receives: messages array + trigger type + user's "why" text + streak days
+- System prompt constructed server-side (never exposed to client)
+- Calls Claude claude-sonnet-4-20250514
+- Streams response back to client (useStream or fetch with ReadableStream)
+- Saves completed conversation to struggle_sessions table in Supabase
+
+---
+
+## Key Design Decisions
+
+- **Dark theme only.** This app gets opened at night, in bed, in vulnerable moments. Dark theme is respectful of that context.
+- **No social features.** No leaderboards, no sharing, no community. Privacy is the product.
+- **No gamification beyond the streak.** No badges, no points. They cheapen the gravity of what this is.
+- **Framer Motion used specifically for:** streak number animation, step transitions in /struggling, celebration confetti, pattern interrupt screen transition
+- **Mobile-first layout** even as a web app — max-width 430px centered, everything thumb-reachable
+- **No ads, ever.** Monetize via a simple one-time purchase or small monthly subscription to unlock patterns + journal AI features. Free tier gets streak + AI chat.
+
+---
+
+## Environment Variables Needed
+
+```
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY
+ANTHROPIC_API_KEY
+```
+
+---
+
+That's the complete blueprint. An AI coding agent can take this and build the entire app end to end. Every screen, every interaction, every edge case is accounted for.
+
+
+---
+
+## Color Palette
+
+**Philosophy:** Dark, calm, and trustworthy. Feels like a quiet room at night — safe, grounding, serious but not cold.
+
+---
+
+**Primary Background** `#0A0A0F`
+Near black with a very slight blue undertone.
+
+**Secondary Background** `#12121A`
+Cards, bottom nav, input areas.
+
+**Surface / Elevated** `#1C1C28`
+Modals, expanded cards, sheet overlays.
+
+---
+
+**Accent — Primary** `#2A9D8F`
+Deep teal. The main interactive color — buttons, active nav icons, streak ring. Teal feels calm, focused, and forward-moving. Associated with clarity of mind and self-control.
+
+**Accent — Streak Gold** `#F5A623`
+Used only for streak number and ring at 30+ days. Earned, not given.
+
+**Accent — Streak Blue** `#4A90D9`
+Streak ring at 7–29 days. Steady, calm progress.
+
+---
+
+**The Struggling Button** `#C0392B` → gradient to `#8E1A10`
+Deep red. Serious and urgent without being panicked. A lifeline, not an alarm.
+
+**Pattern Interrupt Screen** `#0D1B2A`
+Deep navy. Only used in /struggling flow. The color shift signals to the brain: *pay attention.*
+
+---
+
+**Success / Overcame** `#27AE60`
+Clean green. "I got through it" button and celebration screen.
+
+**Relapse / Reset** `#5D5D6B`
+Muted gray. Not red — deliberately unsensational. No punishment, just reset.
+
+---
+
+**Text — Primary** `#F0F0F5`
+Slightly warm white. Easier on the eyes at night.
+
+**Text — Secondary** `#7A8A99`
+Muted blue-gray for subtitles, metadata, timestamps.
+
+**Text — Disabled / Placeholder** `#3A4450`
+
+---
+
+**Mood Colors**
+- 😔 `#5D5D6B`
+- 😕 `#4A6FA5`
+- 😐 `#7A8A99`
+- 🙂 `#4A90D9`
+- 😊 `#27AE60`
+
+---
+
+**Summary**
+
+| Role | Hex |
+|---|---|
+| Background | `#0A0A0F` |
+| Surface | `#1C1C28` |
+| Primary Accent | `#2A9D8F` |
+| Streak Gold | `#F5A623` |
+| Struggling Button | `#C0392B` |
+| Interrupt Screen | `#0D1B2A` |
+| Success | `#27AE60` |
+| Relapse | `#5D5D6B` |
+| Text Primary | `#F0F0F5` |
+| Text Secondary | `#7A8A99` |
