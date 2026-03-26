@@ -9,6 +9,7 @@ export interface GlassButtonProps extends HTMLMotionProps<'button'> {
   fullWidth?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  isLoading?: boolean;
 }
 
 export const GlassButton = ({
@@ -19,6 +20,7 @@ export const GlassButton = ({
   fullWidth = false,
   leftIcon,
   rightIcon,
+  isLoading,
   ...props
 }: GlassButtonProps) => {
   const variants = {
@@ -49,11 +51,15 @@ export const GlassButton = ({
       {...props}
     >
       <span className="relative z-10 flex items-center justify-center gap-2">
-        {leftIcon}
-        <>
-          {children}
-        </>
-        {rightIcon}
+        {isLoading ? (
+          <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+        ) : (
+          <>
+            {leftIcon}
+            {children}
+            {rightIcon}
+          </>
+        )}
       </span>
     </motion.button>
   );
